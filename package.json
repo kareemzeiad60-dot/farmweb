@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i ./tailwind.input.css -o ./tailwind.css --minify",
-    "watch:css": "tailwindcss -i ./tailwind.input.css -o ./tailwind.css --watch"
+    "build:css": "tailwindcss -i ./styles/tailwind.input.css -o ./styles/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./styles/tailwind.input.css -o ./styles/tailwind.css --watch",
+    "generate:sql": "node scripts/generate-sql.js",
+    "test": "node --test"
   },
   "devDependencies": {
     "tailwindcss": "3.4.17"

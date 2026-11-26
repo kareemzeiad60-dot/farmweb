@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#090A0B" />
     <title>Fieldwise | Farm workspace</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="tailwind.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/tailwind.css" />
   </head>
   <body>
     <div id="app-shell">
@@ -94,7 +94,36 @@
       </div>
     </section>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script src="app.js"></script>
+    <script src="src/config/supabase-config.js"></script>
+    <script src="src/config/modules.js"></script>
+    <script src="src/config/regions.js"></script>
+    <script src="src/data/db-schema.js"></script>
+    <script src="src/data/resources/crops.js"></script>
+    <script src="src/data/resources/apiary.js"></script>
+    <script src="src/data/resources/livestock.js"></script>
+    <script src="src/data/resources/finance.js"></script>
+    <script src="src/data/resources/hr.js"></script>
+    <script src="src/data/resources/index.js"></script>
+    <script src="src/utils/helpers.js"></script>
+    <script src="src/state/defaults.js"></script>
+    <script src="src/state/state.js"></script>
+    <script src="src/services/records-db.js"></script>
+    <script src="src/services/store.js"></script>
+    <script src="src/services/auth.js"></script>
+    <script src="src/services/farms.js"></script>
+    <script src="src/services/weather.js"></script>
+    <script src="src/services/holidays.js"></script>
+    <script src="src/services/location.js"></script>
+    <script src="src/services/supabase.js"></script>
+    <script src="src/ui/chrome.js"></script>
+    <script src="src/ui/navigation.js"></script>
+    <script src="src/ui/dashboard.js"></script>
+    <script src="src/ui/list.js"></script>
+    <script src="src/ui/form.js"></script>
+    <script src="src/ui/help.js"></script>
+    <script src="src/ui/farm-profile.js"></script>
+    <script src="src/ui/render.js"></script>
+    <script src="src/actions/records.js"></script>
+    <script src="src/main.js"></script>
   </body>
 </html>
