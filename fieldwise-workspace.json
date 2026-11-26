@@ -1,0 +1,50 @@
+{
+  "format": "fieldwise-workspace",
+  "version": 1,
+  "exportedAt": "2026-11-16T19:00:12.743Z",
+  "records": {
+    "crop-fields": [
+      {
+        "id": "7e97616d-3cf5-487a-bf76-57d01c57f7d8",
+        "name": "Test North Field",
+        "size": "1.2",
+        "unit": "Acres",
+        "soilType": "",
+        "notes": "",
+        "createdAt": "2026-11-16T19:00:12.262Z",
+        "updatedAt": "2026-11-16T19:00:12.262Z"
+      }
+    ],
+    "crops": [
+      {
+        "id": "5d7492ff-3d07-4d1e-b130-46328f7be173",
+        "name": "Test Tomatoes",
+        "variety": "",
+        "type": "Vegetable",
+        "status": "Growing",
+        "field": "7e97616d-3cf5-487a-bf76-57d01c57f7d8",
+        "plantedDate": "2026-11-16",
+        "harvestDate": "",
+        "plantingSeason": "",
+        "notes": "",
+        "createdAt": "2026-11-16T19:00:12.550Z",
+        "updatedAt": "2026-11-16T19:00:12.550Z"
+      }
+    ],
+    "planting-seasons": [],
+    "bee-hives": [],
+    "bee-colonies": [],
+    "hive-inspections": [],
+    "honey-productions": [],
+    "bee-hive-types": [],
+    "animal-fields": [],
+    "animals": [],
+    "livestock-groups": [],
+    "financial-records": [],
+    "users": [],
+    "tasks": [],
+    "farm-workers": [],
+    "worker-leaves": [],
+    "holidays": []
+  }
+}

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090A0B" />
+    <title>Fieldwise | Farm workspace</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="tailwind.css" />
+  </head>
+  <body>
+    <div id="app-shell">
+    <header class="topbar">
+      <button class="icon-button sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+      </button>
+      <a class="brand" href="#/" aria-label="Fieldwise home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M6 25h20M8 25c0-7 3-13 12-18M10 19c4 0 8-2 12-7M13 13c0-3-1-5-3-7M17 25v-6" /></svg>
+        </span>
+        <span>Fieldwise</span>
+      </a>
+      <div class="topbar-context" id="topbar-context"><span class="context-dot"></span> Local preview</div>
+      <button class="avatar-button" id="profile-toggle" type="button" aria-label="Open account menu" aria-expanded="false">
+        <span class="avatar" id="profile-avatar">A</span>
+      </button>
+      <div class="profile-menu" id="profile-menu" hidden>
+        <div class="profile-menu-user">
+          <span class="avatar avatar-small" id="profile-menu-avatar">A</span>
+          <span><strong id="account-name">Local workspace</strong><small id="account-role">Saved in this browser</small></span>
+        </div>
+        <button type="button" id="import-local-data" hidden>Import this browser's local records</button>
+        <button type="button" id="export-data">Export data</button>
+        <button type="button" id="import-data">Import JSON data</button>
+        <button type="button" id="sign-out" hidden>Sign out</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar" aria-label="Main sidebar">
+      <button class="farm-switcher" type="button" id="farm-switcher" aria-expanded="false">
+        <span class="farm-avatar">F</span>
+        <span class="farm-name farm-name-display">Green Valley Farm</span>
+        <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+      </button>
+      <div class="farm-popover" id="farm-popover" hidden></div>
+      <nav class="side-nav" id="sidebar-nav" aria-label="Sidebar navigation"></nav>
+      <div class="sidebar-footer">
+        <span class="avatar sidebar-avatar" id="sidebar-avatar">A</span>
+        <span><strong id="sidebar-account-name">Local workspace</strong><small id="sidebar-account-role">Saved in this browser</small></span>
+        <button class="sidebar-export" id="sidebar-export" type="button" aria-label="Export all farm data" title="Export all farm data">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 17v3h16v-3" /></svg>
+        </button>
+      </div>
+    </aside>
+    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Close navigation" tabindex="-1"></button>
+
+    <main class="main-content" id="main-content" tabindex="-1"></main>
+    <input id="import-file" type="file" accept="application/json,.json" hidden />
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title" hidden>
+      <div class="auth-card">
+        <a class="brand auth-brand" href="#/" aria-label="Fieldwise home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M6 25h20M8 25c0-7 3-13 12-18M10 19c4 0 8-2 12-7M13 13c0-3-1-5-3-7M17 25v-6" /></svg>
+          </span>
+          <span>Fieldwise</span>
+        </a>
+        <p class="eyebrow">SECURE FARM WORKSPACE</p>
+        <h1 id="auth-title">Welcome back</h1>
+        <p class="auth-subtitle" id="auth-subtitle">Sign in to access your farm records.</p>
+        <p class="auth-message auth-error" id="auth-error" role="alert" hidden></p>
+        <p class="auth-message auth-success" id="auth-success" role="status" hidden></p>
+        <form id="auth-form">
+          <div class="auth-field" id="farm-name-group" hidden>
+            <label for="auth-farm-name">Farm name</label>
+            <input id="auth-farm-name" name="farmName" type="text" autocomplete="organization" placeholder="My farm" />
+          </div>
+          <div class="auth-field">
+            <label for="auth-email">Email</label>
+            <input id="auth-email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="auth-field">
+            <label for="auth-password">Password</label>
+            <input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="6" required />
+          </div>
+          <button class="button button-green auth-submit" id="auth-submit-btn" type="submit">Sign in</button>
+        </form>
+        <p class="auth-toggle">
+          <span id="auth-toggle-text">New to Fieldwise?</span>
+          <button class="text-link auth-toggle-link" id="auth-toggle-link" type="button">Create a farm account</button>
+        </p>
+        <p class="auth-config-note" id="auth-config-note" hidden>Cloud storage is configured, but its client library could not be loaded. Check your internet connection and reload.</p>
+      </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
