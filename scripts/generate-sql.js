@@ -13,6 +13,8 @@ const outDir = path.join(root, "supabase", "migrations");
 const sqlTypes = { text: "text", numeric: "numeric", int: "integer", date: "date", bool: "boolean", uuid: "uuid" };
 
 const tableOf = (resourceId) => databaseSchema[resourceId].table;
+// Columns added by later migrations (since: N) are not part of 002 / 003.
+const baseColumns = (spec) => spec.columns.filter((column) => !column.since);
 const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
 
 function columnDefinition(column) {
@@ -36,14 +38,14 @@ function tableSql(resourceId) {
   lines.push(textId ? "id text not null" : "id uuid primary key default gen_random_uuid()");
   lines.push("farm_id uuid not null references public.farms (id) on delete cascade");
   lines.push("created_by uuid default auth.uid() references auth.users (id) on delete set null");
-  for (const column of spec.columns) lines.push(columnDefinition(column));
+  for (const column of baseColumns(spec)) lines.push(columnDefinition(column));
   lines.push("extra jsonb not null default '{}'::jsonb check (jsonb_typeof(extra) = 'object')");
   lines.push("created_at timestamptz not null default now()");
   lines.push("updated_at timestamptz not null default now()");
   lines.push(textId
     ? `constraint ${t}_pkey primary key (farm_id, id)`
     : `constraint ${t}_farm_id_id_key unique (farm_id, id)`);
-  for (const column of spec.columns) {
+  for (const column of baseColumns(spec)) {
     const name = databaseColumnName(column);
     if (column.min !== undefined) lines.push(`constraint ${t}_${name}_min check (${name} >= ${column.min})`);
     if (column.ref && !column.noFk) {
@@ -59,7 +61,7 @@ function tableSql(resourceId) {
   out.push(`-- ${resourceId}`);
   out.push(`create table if not exists public.${t} (\n  ${lines.join(",\n  ")}\n);`);
   out.push(`create index if not exists ${t}_farm_created_idx on public.${t} (farm_id, created_at desc);`);
-  for (const column of spec.columns.filter((c) => c.ref && !c.noFk)) {
+  for (const column of baseColumns(spec).filter((c) => c.ref && !c.noFk)) {
     const name = databaseColumnName(column);
     out.push(`create index if not exists ${t}_${name}_idx on public.${t} (farm_id, ${name});`);
   }
@@ -143,7 +145,7 @@ function legacyColumnExpr(column) {
 
 function legacyGuards(spec) {
   const guards = [];
-  for (const column of spec.columns) {
+  for (const column of baseColumns(spec)) {
     const expr = legacyColumnExpr(column);
     if (column.required && column.type !== "text") guards.push(`${expr} is not null`);
     if (column.min !== undefined) guards.push(`(${expr} is null or ${expr} >= ${column.min})`);
@@ -158,13 +160,14 @@ function legacyGuards(spec) {
 function legacySql(resourceId) {
   const spec = databaseSchema[resourceId];
   const textId = spec.idType === "text";
-  const names = ["id", "farm_id", "created_by", ...spec.columns.map(databaseColumnName), "extra", "created_at", "updated_at"];
-  const knownKeys = ["id", "createdAt", "updatedAt", ...spec.columns.map((c) => c.field)];
+  const columns = baseColumns(spec);
+  const names = ["id", "farm_id", "created_by", ...columns.map(databaseColumnName), "extra", "created_at", "updated_at"];
+  const knownKeys = ["id", "createdAt", "updatedAt", ...columns.map((c) => c.field)];
   const values = [
     textId ? "r.record_id" : "public.fw_try_uuid(r.record_id)",
     "r.farm_id",
     "r.user_id",
-    ...spec.columns.map(legacyColumnExpr),
+    ...columns.map(legacyColumnExpr),
     `coalesce(r.data, '{}'::jsonb) - array[${knownKeys.map(quote).join(", ")}]::text[]`,
     "r.created_at",
     "r.updated_at",

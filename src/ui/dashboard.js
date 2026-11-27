@@ -1,6 +1,7 @@
 // Dashboard page.
 
 function renderDashboard() {
+  const canEdit = canEditRecords();
   const stats = [
     ["animals", "Livestock", "Animals registered", "green", "♧", () => store.animals.length],
     ["crops", "Crop records", "Crops in the workspace", "green", "♧", () => store.crops.length],
@@ -9,14 +10,14 @@ function renderDashboard() {
     ["tasks", "Open tasks", "Work to follow up", "amber", "☷", () => store.tasks.filter((task) => task.status !== "Complete").length],
     ["financial-records", "Financial records", "Income and expenses", "blue", "↗", () => store["financial-records"].length],
   ];
-  const recent = resources.flatMap((resource) => store[resource.id].map((record) => ({
+  const recent = resources.filter((resource) => resource.id !== "users").flatMap((resource) => store[resource.id].map((record) => ({
     resource, record,
   }))).sort((a, b) => String(b.record.updatedAt || b.record.createdAt || "").localeCompare(String(a.record.updatedAt || a.record.createdAt || ""))).slice(0, 5);
 
   return `
     <div class="page-heading">
       <div><p class="eyebrow">FARM WORKSPACE</p><h1>Dashboard</h1><p class="page-subtitle">A clear view of your fields, animals, and daily work.</p></div>
-      <a class="button button-green" href="#/tasks/new">＋ New task</a>
+      ${canEdit ? '<a class="button button-green" href="#/tasks/new">＋ New task</a>' : ""}
     </div>
     <section class="weather-section" aria-labelledby="weather-heading">${renderWeatherCards()}</section>
     <section class="dashboard-section overview-section" aria-labelledby="overview-heading">
@@ -36,10 +37,10 @@ function renderDashboard() {
         <span class="welcome-kicker mb-4 inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] text-emerald-300">YOUR FARM, AT A GLANCE</span>
         <h2 class="max-w-xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">Make today a good day in the field.</h2>
         <p class="mt-2 max-w-lg text-sm leading-6 text-gray-400">Keep important records together, plan the work ahead, and spot what needs attention.</p>
-        <div class="welcome-actions">
+        ${canEdit ? `        <div class="welcome-actions">
           <a class="button button-green bg-emerald-600 text-white shadow-sm shadow-emerald-950/40 transition-colors hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400" href="#/crop-fields/new">Add a field</a>
           <a class="button button-quiet border border-white/10 bg-white/[0.03] text-gray-200 transition-colors hover:border-white/20 hover:bg-white/[0.07] hover:text-white" href="#/animals/new">Register livestock</a>
-        </div>
+        </div>` : ""}
       </div>
       <div class="welcome-art" aria-hidden="true"><span class="sun-disc bg-emerald-400/20 shadow-[0_0_70px_rgba(16,185,129,0.2)]"></span><span class="field-line line-one border-emerald-400/20"></span><span class="field-line line-two border-emerald-400/20"></span><span class="field-line line-three border-emerald-400/20"></span><span class="sprout text-emerald-400/60">✳</span></div>
     </section>
@@ -54,6 +55,7 @@ function renderDashboard() {
           </a>`).join("")}</div>` : `<div class="empty-recent"><span class="empty-symbol">✳</span><strong>No records yet</strong><p>Add your first crop, animal, or task to start building your farm log.</p><a class="text-link" href="#/crop-fields/new">Create your first record →</a></div>`}
       </section>
     </div>
+    ${canEdit ? `
     <section class="dashboard-section quick-links-section">
       <div class="section-heading-row"><div><p class="eyebrow">SHORTCUTS</p><h2 class="section-title">Common tasks</h2></div></div>
       <div class="quick-links">
@@ -62,5 +64,6 @@ function renderDashboard() {
         <a href="#/worker-leaves/new"><span class="quick-icon blue">◷</span><span><strong>Plan leave</strong><small>Manage team availability</small></span><span class="quick-arrow">›</span></a>
       </div>
     </section>
+    ` : ""}
   `;
 }

@@ -2,7 +2,7 @@
 
 const farmManagementResources = [
   {
-    id: "users", nav: "System Users", singular: "User", group: "Farm management",
+    id: "users", nav: "Team", singular: "User", group: "Farm management",
     columns: [["name", "Name"], ["email", "Email"], ["role", "Role"], ["createdAt", "Added"]],
     fields: [
       { name: "name", label: "Name", required: true },

@@ -74,7 +74,7 @@ function renderList(resource) {
   return `
     <div class="page-heading">
       <div><p class="eyebrow">${escapeHtml(resource.group.toUpperCase())}</p><h1>${escapeHtml(resource.nav)}</h1><p class="page-subtitle">Keep ${escapeHtml(resource.nav.toLowerCase())} organized in one place.</p></div>
-      <a class="button button-green" href="#/${resource.id}/new">＋ Add ${escapeHtml(resource.singular.toLowerCase())}</a>
+      ${canEditRecords() ? `<a class="button button-green" href="#/${resource.id}/new">＋ Add ${escapeHtml(resource.singular.toLowerCase())}</a>` : ""}
     </div>
     ${resource.id === "holidays" ? renderHolidayRegionNote() : ""}
     ${renderListStats(resource, state)}
@@ -82,7 +82,7 @@ function renderList(resource) {
       <section class="panel-card quick-create-card">
         <div><p class="eyebrow">GET STARTED</p><h2>No ${escapeHtml(resource.nav)} Yet</h2><p>Create your first ${escapeHtml(resource.singular.toLowerCase())} to start building this section.</p></div>
         <strong class="quick-create-count" aria-label="0 records">0</strong>
-        <a class="quick-create-button" href="#/${resource.id}/new"><span aria-hidden="true">+</span>Create your first ${escapeHtml(resource.singular.toLowerCase())}</a>
+        ${canEditRecords() ? `<a class="quick-create-button" href="#/${resource.id}/new"><span aria-hidden="true">+</span>Create your first ${escapeHtml(resource.singular.toLowerCase())}</a>` : ""}
       </section>
     ` : ""}
     <section class="panel-card resource-panel">
@@ -112,9 +112,9 @@ function renderList(resource) {
             <thead><tr>${resource.columns.map(([key, label]) => `<th scope="col" data-column-key="${escapeHtml(key)}" aria-sort="${state.sort === key ? state.direction === 1 ? "ascending" : "descending" : "none"}" ${hiddenColumns.has(key) ? "hidden" : ""}><button class="sort-button" type="button" data-sort="${escapeHtml(key)}" data-resource="${resource.id}">${escapeHtml(label)}<span class="sort-chevron" aria-hidden="true">${state.sort === key && state.direction === 1 ? "⌃" : "⌄"}</span></button></th>`).join("")}<th scope="col" class="actions-heading">Actions</th></tr></thead>
             <tbody>${records.map((record) => `<tr>
               ${resource.columns.map(([key]) => `<td data-column-key="${escapeHtml(key)}" ${hiddenColumns.has(key) ? "hidden" : ""}>${renderCell(resource, key, record[key], record)}</td>`).join("")}
-              <td class="row-actions">
+              <td class="row-actions">${canEditRecords() ? `
                 <a class="row-action" href="#/${resource.id}/edit/${encodeURIComponent(record.id)}">Edit</a>
-                <button class="row-action danger-action" type="button" data-action="delete" data-resource="${resource.id}" data-id="${escapeHtml(record.id)}">Delete</button>
+                <button class="row-action danger-action" type="button" data-action="delete" data-resource="${resource.id}" data-id="${escapeHtml(record.id)}">Delete</button>` : ""}
               </td>
             </tr>`).join("")}</tbody>
           </table>

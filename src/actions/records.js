@@ -1,6 +1,10 @@
 // Create / edit / delete / import / export records.
 
 async function saveForm(form) {
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   const resource = resourceById.get(form.dataset.resource);
   const id = form.dataset.id;
   const formData = new FormData(form);
@@ -30,6 +34,10 @@ async function saveForm(form) {
 }
 
 async function deleteRecord(resourceId, id) {
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   const resource = resourceById.get(resourceId);
   const record = store[resourceId].find((item) => item.id === id);
   if (!resource || !record) {
@@ -72,6 +80,10 @@ function exportData(resourceId) {
 }
 
 async function importData(file) {
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   let parsed;
   try {
     parsed = JSON.parse(await file.text());
@@ -110,6 +122,10 @@ async function importData(file) {
 
 async function importLocalData() {
   if (!currentUser) return;
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   const localStore = loadStore();
   const localCount = resources.reduce((total, resource) => total + localStore[resource.id].length, 0);
   if (!localCount) {

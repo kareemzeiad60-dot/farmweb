@@ -12,7 +12,7 @@ function showToast(message, type = "") {
 
 function updateAccountUi() {
   const accountName = currentUser?.email || (isSupabaseMode ? "Farm account" : "Local workspace");
-  const accountRole = currentUser ? "Signed in" : "Saved in this browser";
+  const accountRole = currentUser ? (currentRole ? `Signed in · ${roleLabel(currentRole)}` : "Signed in") : "Saved in this browser";
   const initial = accountName.charAt(0).toUpperCase() || "F";
   document.querySelector("#account-name").textContent = accountName;
   document.querySelector("#sidebar-account-name").textContent = accountName;

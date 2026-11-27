@@ -7,14 +7,20 @@ function renderNotFound() {
 function render() {
   const route = getRoute();
   const active = route.resource || route.page;
+  if (route.page === "team") void loadTeam(); // sets teamState synchronously, renders again when done
   renderNavigation(active);
-  if (route.page === "dashboard") main.innerHTML = renderDashboard();
-  else if (route.page === "list") main.innerHTML = renderList(resourceById.get(route.resource));
-  else if (route.page === "form") main.innerHTML = renderForm(resourceById.get(route.resource), route.recordId);
-  else if (route.page === "farm-profile") main.innerHTML = renderFarmProfilePage();
-  else if (route.page === "help-center") main.innerHTML = renderHelp();
-  else main.innerHTML = renderNotFound();
-  document.title = route.page === "dashboard" ? "Dashboard | Fieldwise" : `${route.page === "form" ? "Record" : route.page === "help-center" ? "Help center" : route.page === "farm-profile" ? "Farm profile" : resourceById.get(route.resource)?.nav || "Workspace"} | Fieldwise`;
+  let page;
+  if (route.page === "dashboard") page = renderDashboard();
+  else if (route.page === "list") page = renderList(resourceById.get(route.resource));
+  else if (route.page === "form") page = renderForm(resourceById.get(route.resource), route.recordId);
+  else if (route.page === "farm-profile") page = renderFarmProfilePage();
+  else if (route.page === "help-center") page = renderHelp();
+  else if (route.page === "team") page = renderTeamPage();
+  else if (route.page === "my-tasks") page = renderMyTasks();
+  else page = renderNotFound();
+  main.innerHTML = renderInvitationBanner() + page;
+  const pageTitles = { form: "Record", "help-center": "Help center", "farm-profile": "Farm profile", "my-tasks": "My tasks" };
+  document.title = route.page === "dashboard" ? "Dashboard | Fieldwise" : `${pageTitles[route.page] || resourceById.get(route.resource)?.nav || "Workspace"} | Fieldwise`;
   profileMenu.hidden = true;
   profileToggle.setAttribute("aria-expanded", "false");
   farmPopover.hidden = true;

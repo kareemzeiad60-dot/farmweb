@@ -8,6 +8,9 @@
 //   ref      resource id this column points to (column becomes <name>_id, a uuid foreign key)
 //   noFk     keep the uuid column but skip the foreign key (circular references)
 //   min      adds CHECK (col >= min) for numeric / int columns
+//   member   uuid of a farm member (auth user); composite FK to farm_members, added by migration 004
+//   readOnly loaded into records but never written by the app (set by database functions)
+//   since    column was added by this migration number, so 002/003 are generated without it
 // Every table also has: id, farm_id, created_by, extra (unmapped keys), created_at, updated_at.
 
 const databaseSchema = {
@@ -182,6 +185,8 @@ const databaseSchema = {
       { field: "phone", type: "text" },
       { field: "email", type: "text" },
       { field: "status", type: "text" },
+      // Login of this worker (set when an invitation is accepted or by set_worker_account()).
+      { field: "userId", type: "uuid", member: true, readOnly: true, since: 4 },
     ],
   },
   "tasks": {

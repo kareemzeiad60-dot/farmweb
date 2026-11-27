@@ -57,6 +57,9 @@ function recordToRow(resourceId, record, farmId) {
   const mapped = new Set(["id", "createdAt", "updatedAt"]);
   for (const column of spec.columns) {
     mapped.add(column.field);
+    // Read-only columns (e.g. farm_workers.user_id) are set by database functions only, so a
+    // stale copy of a record can never overwrite them.
+    if (column.readOnly) continue;
     row[databaseColumnName(column)] = toDbValue(column, record[column.field]);
   }
 

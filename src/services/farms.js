@@ -51,12 +51,16 @@ async function loadFarmProfileSettings(userId) {
   }
 }
 
-async function loadFarmProfileAndRecords(userId) {
-  const { data, error } = await sb
-    .from("farms")
-    .select("id, name, country_code, country_name, region_code, region_name, location_name, latitude, longitude, created_by, created_at")
-    .order("created_at", { ascending: true });
+const farmSelectColumns = "id, name, country_code, country_name, region_code, region_name, location_name, latitude, longitude, created_by, created_at";
+
+async function fetchFarms() {
+  const { data, error } = await sb.from("farms").select(farmSelectColumns).order("created_at", { ascending: true });
   if (error) throw error;
+  return data || [];
+}
+
+async function loadFarmProfileAndRecords(userId) {
+  const data = await fetchFarms();
   if (currentUser?.id !== userId) return;
 
   let availableFarms = data || [];
@@ -78,6 +82,7 @@ async function loadFarmProfileAndRecords(userId) {
   }
   const selectedFarm = availableFarms.find((farm) => farm.id === savedFarmId) || availableFarms[0];
   await loadFarmRecords(selectedFarm, userId);
+  await loadPendingInvitations(userId);
 }
 
 async function loadFarmRecords(farm, userId = currentUser?.id) {
@@ -88,6 +93,8 @@ async function loadFarmRecords(farm, userId = currentUser?.id) {
   farmRegion = getFarmRegion(farm);
   holidaySyncState = { status: "idle", error: "" };
   store = emptyStore();
+  currentRole = null;
+  teamState = { farmId: null, status: "idle", members: [], invitations: [], error: "" };
   updateAccountUi();
   render();
   try {
@@ -96,10 +103,15 @@ async function loadFarmRecords(farm, userId = currentUser?.id) {
     console.warn("Could not save the selected farm on this device.", storageError);
   }
 
-  const nextStore = await loadCloudRecords(farm.id);
+  const [nextStore, membership] = await Promise.all([
+    loadCloudRecords(farm.id),
+    sb.from("farm_members").select("role").eq("farm_id", farm.id).eq("user_id", userId).maybeSingle(),
+  ]);
+  if (membership.error) throw membership.error;
   if (currentUser?.id !== userId || currentFarmId !== farm.id) return;
 
   store = nextStore;
+  currentRole = membership.data?.role || null;
   updateAccountUi();
   render();
   if (farmProfileStatus === "ready") {
