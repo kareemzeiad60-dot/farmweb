@@ -38,6 +38,12 @@ function renderNavigation(activeId) {
               <span class="nav-icon">?</span><span>Help center</span>
             </a>`;
           }
+          if (id === "about-policies") {
+            // A separate static page (works without signing in), so a normal link, not a route.
+            return `<a class="nav-link" href="about.html" data-route="about-policies">
+              <span class="nav-icon" aria-hidden="true">§</span><span>About &amp; policies</span>
+            </a>`;
+          }
           if (id === "my-tasks") {
             if (!isSupabaseMode) return "";
             return `<a class="nav-link ${activeId === id ? "active" : ""}" href="#/my-tasks" data-route="my-tasks" ${activeId === id ? 'aria-current="page"' : ""}>
