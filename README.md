@@ -7,8 +7,10 @@ A farm workspace for crops, apiary, livestock, equipment, finance and farm manag
 
 ```
 index.html                 entry page (loads the scripts below in order)
+about.html                 standalone About / Plans / Privacy Policy / Terms / Contact page
 src/
-  config/                  supabase-config.js, modules.js (nav groups), regions.js
+  config/                  supabase-config.js, modules.js (nav groups), regions.js,
+                           site.js (operator, contact email, plans shown on about.html)
   data/
     db-schema.js           table layout for every resource (single source of truth for the SQL)
     resources/             list columns + form fields, one file per module
@@ -132,6 +134,21 @@ Unit tests cover the record <-> row mapping; jsdom end-to-end tests run the real
 Supabase client (data loading and saving, roles, invitations, My tasks). The SQL itself was verified
 on PostgreSQL (migrations 001-004, RLS and the team functions) but those checks are not part of
 `npm test`.
+
+## About, plans and policies
+
+`about.html` is a public page (no sign-in needed) with About, Plans, Privacy Policy, Terms of Use
+and Contact. It is linked from the sign-in screen and from Support → "About & policies".
+
+Before sharing it, open `src/config/site.js` and set `operatorName` and `contactEmail`, and update
+`lastUpdated` whenever you change the policies. Edit the `plans` there once you decide on
+subscriptions: Fieldwise does not process payments, so the page says nothing is charged yet.
+
+The policy texts are written from what the app actually does (accounts and records in Supabase;
+Open-Meteo for weather and place search; Nager.Date for holidays; jsDelivr for the client library;
+no analytics or advertising). A test fails if the app starts contacting a new outside host that the
+privacy policy does not mention. They are a starting template, not legal advice: have them reviewed
+for your country and business before relying on them.
 
 ## Security notes
 

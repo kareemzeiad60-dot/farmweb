@@ -865,3 +865,7 @@ h1 { margin: 0; font-size: 28px; line-height: 1.2; letter-spacing: -.7px; }
 .team-select { min-height: 34px; max-width: 200px; padding: 6px 9px; border: 1px solid #354337; border-radius: 8px; background: #111913; color: var(--text); font: inherit; font-size: 12px; }
 .role-help { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .team-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+/* Links to the About / policies page */
+.auth-legal { margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: center; }
+.auth-legal a { color: #a6d9a1; }

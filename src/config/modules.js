@@ -7,7 +7,7 @@ const resourceGroups = [
   { label: "Equipment", module: "equipment", items: ["equipment", "equipment-services"] },
   { label: "Finance", module: "finance", items: ["financial-records"] },
   { label: "Farm management", module: "humanResources", items: ["users", "tasks", "my-tasks", "farm-workers", "worker-leaves", "holidays"] },
-  { label: "Support", items: ["help-center"] },
+  { label: "Support", items: ["help-center", "about-policies"] },
 ];
 
 const profileStorageKey = "fieldwise-farm-profile-v1";
