@@ -8,6 +8,13 @@
 //   ref      resource id this column points to (column becomes <name>_id, a uuid foreign key)
 //   noFk     keep the uuid column but skip the foreign key (circular references)
 //   min      adds CHECK (col >= min) for numeric / int columns
+//   member   uuid of a farm member (auth user); composite FK to farm_members, added by migration 004
+//   readOnly loaded into records but never written by the app (set by database functions)
+//   since    column was added by this migration number, so 002/003 are generated without it
+//   onDelete "cascade" deletes the row when the referenced row is deleted (default: set the column null)
+// Table spec: { table, columns, idType?, rangeCheck?, since? }
+//   since    table is created by this migration number (not part of 002/003) and the app
+//            tolerates it being missing until that migration has been run
 // Every table also has: id, farm_id, created_by, extra (unmapped keys), created_at, updated_at.
 
 const databaseSchema = {
@@ -145,6 +152,42 @@ const databaseSchema = {
       { field: "notes", type: "text" },
     ],
   },
+  "equipment": {
+    table: "equipment",
+    since: 5,
+    columns: [
+      { field: "name", type: "text", required: true },
+      { field: "category", type: "text", required: true },
+      { field: "make", type: "text" },
+      { field: "model", type: "text" },
+      { field: "serialNumber", type: "text" },
+      { field: "purchaseDate", type: "date" },
+      { field: "purchaseCost", type: "numeric", min: 0 },
+      { field: "supplier", type: "text" },
+      { field: "status", type: "text", required: true },
+      { field: "location", type: "text" },
+      { field: "hoursMeter", type: "numeric", min: 0 },
+      { field: "warrantyExpiry", type: "date" },
+      { field: "warrantyNotes", type: "text" },
+      { field: "notes", type: "text" },
+    ],
+  },
+  "equipment-services": {
+    table: "equipment_services",
+    since: 5,
+    columns: [
+      { field: "equipment", type: "uuid", ref: "equipment", required: true, onDelete: "cascade" },
+      { field: "serviceType", type: "text", required: true },
+      { field: "status", type: "text", required: true },
+      { field: "serviceDate", type: "date", required: true },
+      { field: "hoursAtService", type: "numeric", min: 0 },
+      { field: "cost", type: "numeric", min: 0 },
+      { field: "performedBy", type: "text" },
+      { field: "nextServiceDate", type: "date" },
+      { field: "nextServiceHours", type: "numeric", min: 0 },
+      { field: "notes", type: "text" },
+    ],
+  },
   "feed-mixtures": {
     table: "feed_mixtures",
     columns: [
@@ -182,6 +225,8 @@ const databaseSchema = {
       { field: "phone", type: "text" },
       { field: "email", type: "text" },
       { field: "status", type: "text" },
+      // Login of this worker (set when an invitation is accepted or by set_worker_account()).
+      { field: "userId", type: "uuid", member: true, readOnly: true, since: 4 },
     ],
   },
   "tasks": {
@@ -232,9 +277,13 @@ const databaseTableOrder = [
   "crop-fields", "planting-seasons", "crops",
   "bee-hive-types", "bee-hives", "bee-colonies", "hive-inspections", "honey-productions",
   "animal-fields", "livestock-groups", "animals", "feed-mixtures",
+  "equipment", "equipment-services",
   "financial-records",
   "users", "farm-workers", "tasks", "worker-leaves", "holidays",
 ];
+
+// Migration file that creates the tables / columns introduced by a "since" number.
+const databaseMigrationFiles = { 4: "004_team_invitations.sql", 5: "005_equipment.sql" };
 
 function toSnakeCase(value) {
   return value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
@@ -246,5 +295,5 @@ function databaseColumnName(column) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { databaseSchema, databaseTableOrder, databaseColumnName, toSnakeCase };
+  module.exports = { databaseSchema, databaseTableOrder, databaseColumnName, toSnakeCase, databaseMigrationFiles };
 }

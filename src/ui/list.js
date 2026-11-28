@@ -1,25 +1,26 @@
 // Resource list page.
 
-function classifyRecordState(record) {
+function classifyRecordState(record, resourceId) {
   if (record.active === false) return "inactive";
   const rawStatus = record.status ?? record.health ?? record.active;
   if (rawStatus == null || rawStatus === "") return "active";
   const status = String(rawStatus).trim().toLowerCase();
-  if (["inactive", "archived", "declined", "rejected", "cancelled", "canceled"].includes(status)) return "inactive";
-  if (/attention|treat|maintenance|urgent|pending|progress|not started|follow.?up|weak|overdue/.test(status)) return "attention";
+  if (["inactive", "archived", "declined", "rejected", "cancelled", "canceled", "retired", "sold"].includes(status)) return "inactive";
+  if (resourceId === "equipment" && equipmentAttentionState(record)) return "attention";
+  if (/attention|treat|maintenance|out of service|urgent|pending|progress|not started|follow.?up|weak|overdue/.test(status)) return "attention";
   return "active";
 }
 
-function getResourceStatusCounts(records) {
+function getResourceStatusCounts(records, resourceId) {
   return records.reduce((counts, record) => {
-    counts[classifyRecordState(record)] += 1;
+    counts[classifyRecordState(record, resourceId)] += 1;
     return counts;
   }, { active: 0, attention: 0, inactive: 0 });
 }
 
 function renderListStats(resource, state) {
   const records = store[resource.id];
-  const counts = getResourceStatusCounts(records);
+  const counts = getResourceStatusCounts(records, resource.id);
   const stats = [
     ["all", "Total records", records.length, "Every record in this section", "total"],
     ["active", "Active", counts.active, "Healthy and in progress", "active"],
@@ -74,7 +75,7 @@ function renderList(resource) {
   return `
     <div class="page-heading">
       <div><p class="eyebrow">${escapeHtml(resource.group.toUpperCase())}</p><h1>${escapeHtml(resource.nav)}</h1><p class="page-subtitle">Keep ${escapeHtml(resource.nav.toLowerCase())} organized in one place.</p></div>
-      <a class="button button-green" href="#/${resource.id}/new">＋ Add ${escapeHtml(resource.singular.toLowerCase())}</a>
+      ${canEditRecords() ? `<a class="button button-green" href="#/${resource.id}/new">＋ Add ${escapeHtml(resource.singular.toLowerCase())}</a>` : ""}
     </div>
     ${resource.id === "holidays" ? renderHolidayRegionNote() : ""}
     ${renderListStats(resource, state)}
@@ -82,7 +83,7 @@ function renderList(resource) {
       <section class="panel-card quick-create-card">
         <div><p class="eyebrow">GET STARTED</p><h2>No ${escapeHtml(resource.nav)} Yet</h2><p>Create your first ${escapeHtml(resource.singular.toLowerCase())} to start building this section.</p></div>
         <strong class="quick-create-count" aria-label="0 records">0</strong>
-        <a class="quick-create-button" href="#/${resource.id}/new"><span aria-hidden="true">+</span>Create your first ${escapeHtml(resource.singular.toLowerCase())}</a>
+        ${canEditRecords() ? `<a class="quick-create-button" href="#/${resource.id}/new"><span aria-hidden="true">+</span>Create your first ${escapeHtml(resource.singular.toLowerCase())}</a>` : ""}
       </section>
     ` : ""}
     <section class="panel-card resource-panel">
@@ -112,9 +113,10 @@ function renderList(resource) {
             <thead><tr>${resource.columns.map(([key, label]) => `<th scope="col" data-column-key="${escapeHtml(key)}" aria-sort="${state.sort === key ? state.direction === 1 ? "ascending" : "descending" : "none"}" ${hiddenColumns.has(key) ? "hidden" : ""}><button class="sort-button" type="button" data-sort="${escapeHtml(key)}" data-resource="${resource.id}">${escapeHtml(label)}<span class="sort-chevron" aria-hidden="true">${state.sort === key && state.direction === 1 ? "⌃" : "⌄"}</span></button></th>`).join("")}<th scope="col" class="actions-heading">Actions</th></tr></thead>
             <tbody>${records.map((record) => `<tr>
               ${resource.columns.map(([key]) => `<td data-column-key="${escapeHtml(key)}" ${hiddenColumns.has(key) ? "hidden" : ""}>${renderCell(resource, key, record[key], record)}</td>`).join("")}
-              <td class="row-actions">
+              <td class="row-actions">${canEditRecords() ? `
+                ${resource.id === "equipment" ? `<a class="row-action" href="#/equipment-services/new/${encodeURIComponent(record.id)}">Log service</a>` : ""}
                 <a class="row-action" href="#/${resource.id}/edit/${encodeURIComponent(record.id)}">Edit</a>
-                <button class="row-action danger-action" type="button" data-action="delete" data-resource="${resource.id}" data-id="${escapeHtml(record.id)}">Delete</button>
+                <button class="row-action danger-action" type="button" data-action="delete" data-resource="${resource.id}" data-id="${escapeHtml(record.id)}">Delete</button>` : ""}
               </td>
             </tr>`).join("")}</tbody>
           </table>
@@ -131,6 +133,8 @@ function renderList(resource) {
 }
 
 function renderCell(resource, key, value, record) {
+  if (key === "warranty") return renderWarrantyCell(record);
+  if (key === "nextService") return renderNextServiceCell(record);
   if (key === "cropCount") value = store.crops.filter((crop) => crop.field === record.id).length;
   if (key === "animalCount") value = store.animals.filter((animal) => animal.field === record.id).length;
   const field = resource.fields.find((item) => item.name === key);
@@ -144,7 +148,7 @@ function renderCell(resource, key, value, record) {
     value = related ? related.name || related.title || related.hiveNumber || related.tag : value;
   }
   if (key === "date" || key.toLowerCase().includes("date") || key === "established") return escapeHtml(formatDate(value));
-  if (key === "amount") return value === "" || value == null ? "—" : `${escapeHtml(farmProfile.currency)} ${escapeHtml(Number(value).toFixed(2))}`;
+  if (["amount", "cost", "purchaseCost"].includes(key)) return value === "" || value == null ? "—" : `${escapeHtml(farmProfile.currency)} ${escapeHtml(Number(value).toFixed(2))}`;
   if (key === "active") return value ? `<span class="status-pill status-green">Active</span>` : `<span class="status-pill">Inactive</span>`;
   if (key === "status") return `<span class="status-pill ${statusClass(value)}">${escapeHtml(value || "—")}</span>`;
   return escapeHtml(value || "—");
@@ -152,9 +156,9 @@ function renderCell(resource, key, value, record) {
 
 function statusClass(value) {
   const normalized = String(value || "").toLowerCase();
-  if (["active", "healthy", "complete", "approved", "growing", "income"].includes(normalized)) return "status-green";
-  if (["urgent", "needs attention", "under treatment", "declined"].includes(normalized)) return "status-red";
-  if (["in progress", "pending", "planned", "expense"].includes(normalized)) return "status-amber";
+  if (["active", "healthy", "complete", "completed", "approved", "growing", "income"].includes(normalized)) return "status-green";
+  if (["urgent", "needs attention", "under treatment", "declined", "out of service"].includes(normalized)) return "status-red";
+  if (["in progress", "pending", "planned", "expense", "scheduled", "under maintenance"].includes(normalized)) return "status-amber";
   return "";
 }
 
@@ -170,7 +174,7 @@ function filterAndSort(resource, state) {
     const matchesText = !query || Object.values(record).some((value) => String(value ?? "").toLowerCase().includes(query));
     const filterField = getFilterField(resource);
     const matchesStatus = !state.filter || String(record[filterField?.name] || "") === state.filter;
-    const matchesGroup = !state.statusGroup || classifyRecordState(record) === state.statusGroup;
+    const matchesGroup = !state.statusGroup || classifyRecordState(record, resource.id) === state.statusGroup;
     return matchesText && matchesStatus && matchesGroup;
   });
   if (state.sort) {

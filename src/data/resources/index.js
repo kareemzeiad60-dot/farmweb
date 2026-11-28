@@ -4,6 +4,7 @@ const resources = [
   ...cropResources,
   ...apiaryResources,
   ...livestockResources,
+  ...equipmentResources,
   ...financeResources,
   ...farmManagementResources,
 ];

@@ -1,6 +1,10 @@
 // Create / edit / delete / import / export records.
 
 async function saveForm(form) {
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   const resource = resourceById.get(form.dataset.resource);
   const id = form.dataset.id;
   const formData = new FormData(form);
@@ -30,6 +34,10 @@ async function saveForm(form) {
 }
 
 async function deleteRecord(resourceId, id) {
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   const resource = resourceById.get(resourceId);
   const record = store[resourceId].find((item) => item.id === id);
   if (!resource || !record) {
@@ -37,9 +45,14 @@ async function deleteRecord(resourceId, id) {
     return;
   }
   const label = record.name || record.title || record.hiveNumber || resource.singular.toLowerCase();
-  if (!window.confirm(`Delete “${label}”? This cannot be undone.`)) return;
+  // Deleting equipment also deletes its service log (the database does the same).
+  const serviceLog = resourceId === "equipment" ? store["equipment-services"].filter((item) => item.equipment === id) : [];
+  const alsoDeleting = serviceLog.length ? ` and its ${serviceLog.length} service ${serviceLog.length === 1 ? "record" : "records"}` : "";
+  if (!window.confirm(`Delete “${label}”${alsoDeleting}? This cannot be undone.`)) return;
   const cloudChanges = [{ type: "delete", resourceId, recordId: id }];
-  if (await commit({ ...store, [resourceId]: store[resourceId].filter((item) => item.id !== id) }, cloudChanges)) {
+  const nextStore = { ...store, [resourceId]: store[resourceId].filter((item) => item.id !== id) };
+  if (serviceLog.length) nextStore["equipment-services"] = store["equipment-services"].filter((item) => item.equipment !== id);
+  if (await commit(nextStore, cloudChanges)) {
     render();
     showToast("Record deleted.");
   }
@@ -72,6 +85,10 @@ function exportData(resourceId) {
 }
 
 async function importData(file) {
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   let parsed;
   try {
     parsed = JSON.parse(await file.text());
@@ -110,6 +127,10 @@ async function importData(file) {
 
 async function importLocalData() {
   if (!currentUser) return;
+  if (!canEditRecords()) {
+    showToast("Your role is read-only.");
+    return;
+  }
   const localStore = loadStore();
   const localCount = resources.reduce((total, resource) => total + localStore[resource.id].length, 0);
   if (!localCount) {

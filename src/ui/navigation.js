@@ -5,8 +5,11 @@ function getRoute() {
   if (!path.length) return { page: "dashboard" };
   if (path[0] === "help-center") return { page: "help-center" };
   if (path[0] === "farm-profile") return { page: "farm-profile" };
+  if (path[0] === "my-tasks") return { page: "my-tasks" };
+  // "users" is the Team page: members come from the database, not from editable records.
+  if (path[0] === "users") return { page: "team", resource: "users" };
   if (!resourceById.has(path[0])) return { page: "not-found" };
-  if (path[1] === "new") return { page: "form", resource: path[0] };
+  if (path[1] === "new") return { page: "form", resource: path[0], prefill: path[2] ? decodeURIComponent(path[2]) : "" };
   if (path[1] === "edit" && path[2]) return { page: "form", resource: path[0], recordId: decodeURIComponent(path[2]) };
   return { page: "list", resource: path[0] };
 }
@@ -35,11 +38,18 @@ function renderNavigation(activeId) {
               <span class="nav-icon">?</span><span>Help center</span>
             </a>`;
           }
+          if (id === "my-tasks") {
+            if (!isSupabaseMode) return "";
+            return `<a class="nav-link ${activeId === id ? "active" : ""}" href="#/my-tasks" data-route="my-tasks" ${activeId === id ? 'aria-current="page"' : ""}>
+              <span class="nav-icon" aria-hidden="true">${navigationIcon(id)}</span>
+              <span>My tasks</span><span class="nav-count">${myTasks().filter((task) => task.status !== "Complete").length}</span>
+            </a>`;
+          }
           const resource = resourceById.get(id);
-          const count = store[id].length;
+          const countBadge = id === "users" ? "" : `<span class="nav-count">${store[id].length}</span>`;
           return `<a class="nav-link ${activeId === id ? "active" : ""}" href="#/${id}" data-route="${id}" ${activeId === id ? 'aria-current="page"' : ""}>
             <span class="nav-icon" aria-hidden="true">${navigationIcon(id)}</span>
-            <span>${escapeHtml(resource.nav)}</span><span class="nav-count">${count}</span>
+            <span>${escapeHtml(resource.nav)}</span>${countBadge}
           </a>`;
         }).join("")}
       </div>
@@ -63,8 +73,8 @@ function navigationIcon(id) {
     "crop-fields": "⌗", crops: "♧", "planting-seasons": "◷", "bee-hives": "▤",
     "bee-colonies": "♧", "hive-inspections": "⌕", "honey-productions": "◉",
     "bee-hive-types": "▦", "animal-fields": "⌗", animals: "♧",
-    "livestock-groups": "♙", "feed-mixtures": "♨", "financial-records": "↗", users: "♙",
-    tasks: "☷", "farm-workers": "♙", "worker-leaves": "◷", holidays: "▣",
+    "livestock-groups": "♙", "feed-mixtures": "♨", equipment: "⚒", "equipment-services": "↻", "financial-records": "↗", users: "♙",
+    tasks: "☷", "my-tasks": "☑", "farm-workers": "♙", "worker-leaves": "◷", holidays: "▣",
   };
   return icons[id] || "•";
 }

@@ -35,5 +35,8 @@ let farmProfileStatus = "idle";
 let farmRegion = loadLocalFarmRegion();
 let weatherState = { status: "loading", data: null, error: "" };
 let holidaySyncState = { status: "idle", error: "" };
+let currentRole = null; // role of the signed-in user in the current farm (cloud mode only)
+let pendingInvitations = []; // farm invitations waiting for the signed-in user
+let teamState = { farmId: null, status: "idle", members: [], invitations: [], error: "" };
 
 let store = loadStore();

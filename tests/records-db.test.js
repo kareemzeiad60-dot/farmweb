@@ -11,7 +11,7 @@ function createContext(fakeClient) {
   const context = vm.createContext({ console, sb: fakeClient });
   for (const file of [
     "src/data/db-schema.js",
-    "src/data/resources/crops.js", "src/data/resources/apiary.js", "src/data/resources/livestock.js",
+    "src/data/resources/crops.js", "src/data/resources/apiary.js", "src/data/resources/livestock.js", "src/data/resources/equipment.js",
     "src/data/resources/finance.js", "src/data/resources/hr.js", "src/data/resources/index.js",
     "src/services/records-db.js",
   ]) {
@@ -37,13 +37,20 @@ function fakeSupabase() {
         eq(column, value) { query.filters[column] = value; return builder; },
         order() { return builder; },
         range(from, to) { query.range = [from, to]; return builder; },
-        upsert(rows, options) { calls.push({ op: "upsert", table, rows, options }); return Promise.resolve({ error: null }); },
+        upsert(rows, options) {
+          calls.push({ op: "upsert", table, rows, options });
+          if (tables[table] === "MISSING") return Promise.resolve({ error: { code: "PGRST205", message: `Could not find the table 'public.${table}' in the schema cache` } });
+          return Promise.resolve({ error: null });
+        },
         delete() {
           const del = { eq(column, value) { query.filters[column] = value; return Object.keys(query.filters).length > 1 ? finish() : del; } };
           const finish = () => { calls.push({ op: "delete", table, filters: { ...query.filters } }); return Promise.resolve({ error: null }); };
           return del;
         },
         then(resolve) {
+          if (tables[table] === "MISSING") {
+            return Promise.resolve({ data: null, error: { code: "PGRST205", message: `Could not find the table 'public.${table}' in the schema cache` } }).then(resolve);
+          }
           const rows = (tables[table] || []).filter((row) => row.farm_id === query.filters.farm_id);
           const [from, to] = query.range || [0, rows.length];
           calls.push({ op: "select", table, range: query.range });
@@ -148,5 +155,44 @@ test("loadCloudRecords reads every table for the farm and pages past 1000 rows",
   assert.equal(loaded["crop-fields"][0].size, "1");
   assert.equal(loaded.crops.length, 0);
   const tablesRead = new Set(client.calls.filter((c) => c.op === "select").map((c) => c.table));
-  assert.equal(tablesRead.size, 18);
+  assert.equal(tablesRead.size, vm.runInContext("databaseTableOrder.length", context));
+  assert.equal(tablesRead.size, 20);
+});
+
+test("tables from later migrations may be missing: loading treats them as empty", async () => {
+  const client = fakeSupabase();
+  client.tables.equipment = "MISSING";
+  client.tables.equipment_services = "MISSING";
+  const context = createContext(client);
+  const loaded = await vm.runInContext(`loadCloudRecords("${FARM}")`, context);
+  assert.deepEqual([...loaded.equipment], []);
+  assert.deepEqual([...loaded["equipment-services"]], []);
+});
+
+test("a missing original table is still a real error", async () => {
+  const client = fakeSupabase();
+  client.tables.crops = "MISSING";
+  const context = createContext(client);
+  await assert.rejects(() => vm.runInContext(`loadCloudRecords("${FARM}")`, context), /crops/);
+});
+
+test("writing to a missing later table explains which migration to run", async () => {
+  const client = fakeSupabase();
+  client.tables.equipment = "MISSING";
+  const context = createContext(client);
+  context.changes = [{ type: "upsert", resourceId: "equipment", records: [{ id: CROP, name: "Tractor", category: "Tractor", status: "Active" }] }];
+  await assert.rejects(() => vm.runInContext(`persistCloudChanges(changes, "${FARM}")`, context), /005_equipment\.sql/);
+});
+
+test("equipment maps to snake_case columns and its service log cascades from it", () => {
+  const context = createContext(null);
+  context.service = { id: CROP, equipment: FIELD, serviceType: "Repair", status: "Completed", serviceDate: "2026-10-01", hoursAtService: "1100", cost: "350.5", nextServiceHours: "" };
+  const row = vm.runInContext(`recordToRow("equipment-services", service, "${FARM}")`, context);
+  assert.equal(row.equipment_id, FIELD);
+  assert.equal(row.hours_at_service, 1100);
+  assert.equal(row.cost, 350.5);
+  assert.equal(row.next_service_hours, null);
+  assert.equal(row.next_service_date, null);
+  const order = vm.runInContext("databaseTableOrder", context);
+  assert.ok(order.indexOf("equipment") < order.indexOf("equipment-services"));
 });

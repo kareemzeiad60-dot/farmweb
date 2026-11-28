@@ -57,6 +57,9 @@ function recordToRow(resourceId, record, farmId) {
   const mapped = new Set(["id", "createdAt", "updatedAt"]);
   for (const column of spec.columns) {
     mapped.add(column.field);
+    // Read-only columns (e.g. farm_workers.user_id) are set by database functions only, so a
+    // stale copy of a record can never overwrite them.
+    if (column.readOnly) continue;
     row[databaseColumnName(column)] = toDbValue(column, record[column.field]);
   }
 
@@ -82,13 +85,24 @@ function rowToRecord(resourceId, row) {
   return record;
 }
 
-function cloudError(error, table) {
-  const wrapped = new Error(`${table}: ${error.message || "request failed"}`);
+function isMissingTableError(error) {
+  return Boolean(error) && (error.code === "PGRST205" || error.code === "42P01"
+    || /could not find the table|relation .* does not exist/i.test(error.message || ""));
+}
+
+function cloudError(error, table, resourceId) {
+  const spec = resourceId ? databaseSchema[resourceId] : null;
+  const migration = spec?.since ? databaseMigrationFiles[spec.since] : null;
+  const message = migration && isMissingTableError(error)
+    ? `The ${table} table is missing. Run supabase/migrations/${migration} in the Supabase SQL editor.`
+    : `${table}: ${error.message || "request failed"}`;
+  const wrapped = new Error(message);
   wrapped.cause = error;
+  wrapped.code = error.code;
   return wrapped;
 }
 
-async function fetchAllRows(table, farmId) {
+async function fetchAllRows(table, farmId, resourceId) {
   const rows = [];
   for (let from = 0; ; from += cloudPageSize) {
     const { data, error } = await sb
@@ -98,7 +112,7 @@ async function fetchAllRows(table, farmId) {
       .order("created_at", { ascending: false })
       .order("id", { ascending: true })
       .range(from, from + cloudPageSize - 1);
-    if (error) throw cloudError(error, table);
+    if (error) throw cloudError(error, table, resourceId);
     rows.push(...(data || []));
     if (!data || data.length < cloudPageSize) return rows;
   }
@@ -108,8 +122,19 @@ async function fetchAllRows(table, farmId) {
 async function loadCloudRecords(farmId) {
   const loaded = emptyStore();
   await Promise.all(databaseTableOrder.map(async (resourceId) => {
-    const rows = await fetchAllRows(databaseSchema[resourceId].table, farmId);
-    loaded[resourceId] = rows.map((row) => rowToRecord(resourceId, row));
+    const spec = databaseSchema[resourceId];
+    try {
+      const rows = await fetchAllRows(spec.table, farmId, resourceId);
+      loaded[resourceId] = rows.map((row) => rowToRecord(resourceId, row));
+    } catch (error) {
+      // Tables from later migrations may not exist yet: treat them as empty, keep the app usable.
+      if (spec.since && isMissingTableError(error.cause)) {
+        console.warn(error.message);
+        loaded[resourceId] = [];
+        return;
+      }
+      throw error;
+    }
   }));
   return loaded;
 }
@@ -128,7 +153,7 @@ async function persistCloudChanges(changes, farmId) {
       const { error } = await sb
         .from(table)
         .upsert(rows.slice(index, index + cloudWriteBatchSize), { onConflict: "farm_id,id" });
-      if (error) throw cloudError(error, table);
+      if (error) throw cloudError(error, table, change.resourceId);
     }
   }
 
@@ -139,7 +164,7 @@ async function persistCloudChanges(changes, farmId) {
       .delete()
       .eq("farm_id", farmId)
       .eq("id", String(change.recordId));
-    if (error) throw cloudError(error, table);
+    if (error) throw cloudError(error, table, change.resourceId);
   }
 }
 

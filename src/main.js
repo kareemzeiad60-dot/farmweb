@@ -73,6 +73,23 @@ document.addEventListener("click", (event) => {
       showToast(`Could not delete record: ${error.message || "Unexpected error."}`);
     });
   }
+  const teamActions = {
+    "accept-invitation": () => acceptInvitation(action.dataset.id),
+    "decline-invitation": () => declineInvitation(action.dataset.id),
+    "revoke-invitation": () => revokeInvitation(action.dataset.id),
+    "remove-member": () => removeMember(action.dataset.userId),
+    "leave-farm": () => leaveFarm(),
+    "reload-team": () => refreshTeam(),
+    "complete-task": () => completeTask(action.dataset.id),
+  };
+  if (teamActions[action.dataset.action]) {
+    teamActions[action.dataset.action]().catch((error) => {
+      console.error("Team action failed.", error);
+      showToast(error.message || "That action could not be completed.");
+      if (getRoute().page === "team") render();
+    });
+    return;
+  }
   if (action.dataset.action === "export-all") exportData();
   if (action.dataset.action === "export-current") exportData(action.dataset.resource);
 });
@@ -84,6 +101,15 @@ document.addEventListener("submit", (event) => {
     saveFarmProfile(event.target).catch((error) => {
       console.error("Could not save the farm profile.", error);
       showToast(`Could not save farm profile: ${error.message || "Unexpected error."}`);
+    });
+    return;
+  }
+  if (event.target.id === "invite-form") {
+    event.preventDefault();
+    if (!event.target.reportValidity()) return;
+    inviteMember(event.target).catch((error) => {
+      console.error("Could not create the invitation.", error);
+      showToast(error.message || "Could not create the invitation.");
     });
     return;
   }
@@ -214,6 +240,21 @@ document.addEventListener("click", (event) => {
     farmPopover.hidden = true;
     farmSwitcher.setAttribute("aria-expanded", "false");
   }
+});
+
+
+// Team page: role and worker-record selects.
+document.addEventListener("change", (event) => {
+  const select = event.target.closest("[data-member-role], [data-worker-link]");
+  if (!select) return;
+  const task = select.hasAttribute("data-member-role")
+    ? changeMemberRole(select.dataset.userId, select.value)
+    : setWorkerAccount(select.dataset.userId, select.value);
+  task.catch((error) => {
+    console.error("Team update failed.", error);
+    showToast(error.message || "That change could not be saved.");
+    render();
+  });
 });
 
 window.addEventListener("hashchange", render);

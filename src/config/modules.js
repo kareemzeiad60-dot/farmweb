@@ -4,8 +4,9 @@ const resourceGroups = [
   { label: "Crops", module: "crops", items: ["crop-fields", "crops", "planting-seasons"] },
   { label: "Apiary", module: "apiary", items: ["bee-hives", "bee-colonies", "hive-inspections", "honey-productions", "bee-hive-types"] },
   { label: "Livestock", module: "livestock", items: ["animal-fields", "animals", "livestock-groups", "feed-mixtures"] },
+  { label: "Equipment", module: "equipment", items: ["equipment", "equipment-services"] },
   { label: "Finance", module: "finance", items: ["financial-records"] },
-  { label: "Farm management", module: "humanResources", items: ["users", "tasks", "farm-workers", "worker-leaves", "holidays"] },
+  { label: "Farm management", module: "humanResources", items: ["users", "tasks", "my-tasks", "farm-workers", "worker-leaves", "holidays"] },
   { label: "Support", items: ["help-center"] },
 ];
 
@@ -16,14 +17,16 @@ const defaultActiveModules = {
   apiary: true,
   livestock: true,
   finance: true,
+  equipment: true,
   humanResources: true,
 };
 const activeModuleOptions = [
   { key: "crops", label: "Crops", description: "Fields, crops, and planting seasons" },
   { key: "apiary", label: "Apiary", description: "Hives, colonies, inspections, and honey" },
   { key: "livestock", label: "Livestock", description: "Animals, groups, feed, and livestock fields" },
+  { key: "equipment", label: "Equipment", description: "Tractors, machinery, implements, warranty and service tracking" },
   { key: "finance", label: "Finance", description: "Income and expense records" },
-  { key: "humanResources", label: "Human resources", description: "Users, tasks, workers, leave, and holidays" },
+  { key: "humanResources", label: "Human resources", description: "Team, tasks, workers, leave, and holidays" },
 ];
 
 const relatedRecordSources = ["animals", "crop-fields", "crops", "feed-mixtures"];
