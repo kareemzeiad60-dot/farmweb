@@ -12,7 +12,7 @@ function render() {
   let page;
   if (route.page === "dashboard") page = renderDashboard();
   else if (route.page === "list") page = renderList(resourceById.get(route.resource));
-  else if (route.page === "form") page = renderForm(resourceById.get(route.resource), route.recordId);
+  else if (route.page === "form") page = renderForm(resourceById.get(route.resource), route.recordId, route.prefill);
   else if (route.page === "farm-profile") page = renderFarmProfilePage();
   else if (route.page === "help-center") page = renderHelp();
   else if (route.page === "team") page = renderTeamPage();

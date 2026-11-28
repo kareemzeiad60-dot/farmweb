@@ -1,11 +1,12 @@
 // Resource form page.
 
-function renderForm(resource, recordId) {
+function renderForm(resource, recordId, prefill = "") {
   if (!canEditRecords()) {
     return `<section class="panel-card empty-state"><span class="empty-symbol">⌕</span><h1>Read-only access</h1><p>Your role (${escapeHtml(roleLabel(currentRole))}) can view records but not change them. Ask the farm owner for a different role.</p><a class="button button-quiet" href="#/${resource.id}">Back to ${escapeHtml(resource.nav)}</a></section>`;
   }
   const record = recordId ? store[resource.id].find((item) => item.id === recordId) : null;
   if (recordId && !record) return `<section class="panel-card empty-state"><h1>Record not found</h1><p>This item may have been removed from the local workspace.</p><a class="button button-quiet" href="#/${resource.id}">Back to ${escapeHtml(resource.nav)}</a></section>`;
+  const defaults = record ? {} : formDefaults(resource, prefill);
   const title = record ? `Edit ${resource.singular.toLowerCase()}` : `New ${resource.singular.toLowerCase()}`;
   return `
     <div class="page-heading">
@@ -13,7 +14,7 @@ function renderForm(resource, recordId) {
     </div>
     <form class="record-form panel-card" id="record-form" data-resource="${resource.id}" data-id="${escapeHtml(recordId || "")}">
       <div class="form-grid">
-        ${resource.fields.filter((field) => field.type !== "related-record").map((field) => renderField(resource, field, record ? record[field.name] : "")).join("")}
+        ${resource.fields.filter((field) => field.type !== "related-record").map((field) => renderField(resource, field, record ? record[field.name] : (defaults[field.name] ?? ""))).join("")}
       </div>
       ${renderRelatedRecordAccordion(resource, record)}
       <div class="form-actions">

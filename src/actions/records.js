@@ -45,9 +45,14 @@ async function deleteRecord(resourceId, id) {
     return;
   }
   const label = record.name || record.title || record.hiveNumber || resource.singular.toLowerCase();
-  if (!window.confirm(`Delete “${label}”? This cannot be undone.`)) return;
+  // Deleting equipment also deletes its service log (the database does the same).
+  const serviceLog = resourceId === "equipment" ? store["equipment-services"].filter((item) => item.equipment === id) : [];
+  const alsoDeleting = serviceLog.length ? ` and its ${serviceLog.length} service ${serviceLog.length === 1 ? "record" : "records"}` : "";
+  if (!window.confirm(`Delete “${label}”${alsoDeleting}? This cannot be undone.`)) return;
   const cloudChanges = [{ type: "delete", resourceId, recordId: id }];
-  if (await commit({ ...store, [resourceId]: store[resourceId].filter((item) => item.id !== id) }, cloudChanges)) {
+  const nextStore = { ...store, [resourceId]: store[resourceId].filter((item) => item.id !== id) };
+  if (serviceLog.length) nextStore["equipment-services"] = store["equipment-services"].filter((item) => item.equipment !== id);
+  if (await commit(nextStore, cloudChanges)) {
     render();
     showToast("Record deleted.");
   }

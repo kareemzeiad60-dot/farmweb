@@ -7,6 +7,7 @@ function renderDashboard() {
     ["crops", "Crop records", "Crops in the workspace", "green", "♧", () => store.crops.length],
     ["crop-fields", "Crop fields", "Areas under cultivation", "blue", "▦", () => store["crop-fields"].length],
     ["bee-hives", "Beehives", "Apiary locations", "green", "▤", () => store["bee-hives"].length],
+    ["equipment", "Equipment", equipmentAttentionCount() ? `${equipmentAttentionCount()} need attention` : "Machines and implements", "amber", "⚒", () => store.equipment.length],
     ["tasks", "Open tasks", "Work to follow up", "amber", "☷", () => store.tasks.filter((task) => task.status !== "Complete").length],
     ["financial-records", "Financial records", "Income and expenses", "blue", "↗", () => store["financial-records"].length],
   ];

@@ -1,6 +1,6 @@
 # Fieldwise
 
-A farm workspace for crops, apiary, livestock, finance and farm management. It is a static web app
+A farm workspace for crops, apiary, livestock, equipment, finance and farm management. It is a static web app
 (plain HTML/CSS/JS + Tailwind) that stores data in the browser, or in Supabase when signed in.
 
 ## Project layout
@@ -17,13 +17,13 @@ src/
   services/                records-db.js (record <-> table row mapping), store.js, auth.js, farms.js,
                            team.js, weather.js, holidays.js, location.js, supabase.js
   ui/                      navigation, dashboard, list, form, help, farm-profile, team, my-tasks,
-                           render, chrome
+                           equipment (warranty / service logic), render, chrome
   actions/                 records.js (save / delete / import / export), team.js, tasks.js
   utils/helpers.js
   main.js                  event wiring and app start
 styles/                    app.css, tailwind.input.css, tailwind.css (generated)
 supabase/migrations/       001_core.sql, 002_domain_tables.sql, 003_migrate_legacy_records.sql,
-                           004_team_invitations.sql
+                           004_team_invitations.sql, 005_equipment.sql
 scripts/generate-sql.js    generates 002 and 003 from src/data/db-schema.js
 samples/                   example workspace export (importable JSON)
 tests/                     node:test unit tests
@@ -54,6 +54,8 @@ Run the files in `supabase/migrations/` in order in the Supabase SQL editor:
 
 4. `004_team_invitations.sql` – invitations, member roles and linking workers to accounts (see below).
 
+5. `005_equipment.sql` – the `equipment` and `equipment_services` tables (see below).
+
 Needs PostgreSQL 15+ (current Supabase projects). Every table has `farm_id`; links between tables use
 composite foreign keys `(farm_id, id)`, so a record can never point into another farm. Owners,
 managers and workers can edit; viewers are read-only. Values the app has no column for are kept in the
@@ -82,6 +84,26 @@ unconfirmed address could be claimed by someone else.
 **Workers.** `farm_workers.user_id` links a worker record to a login. Accepting an invitation links
 an existing worker record with the same email, or creates one for the Worker role. Managers can
 change the link on the Team page. Linked workers see their tasks under "My tasks".
+
+## Equipment
+
+Tractors, machinery, implements, vehicles and tools, with warranty and service tracking
+(Equipment section in the sidebar; it can be switched off in Farm profile → modules).
+
+- **Equipment** – make, model, serial number, purchase details, status, engine hours and warranty.
+  The list shows a warranty badge (Active / Expires in N days within 60 days / Expired) and the
+  next service (Due in N days within 30 days / Overdue).
+- **Service Log** – one row per service: type, date, hours, cost, who did it and the next service
+  due (by date and/or engine hours). Status *Scheduled* plans a future service. "Log service" on an
+  equipment row opens the form with that machine selected.
+- **Next service** = the earliest of the scheduled services and the "next due" date of the most
+  recent completed service. It is overdue by date, or by hours once the equipment's engine hours
+  reach the "next service at" reading. Retired equipment is not tracked.
+- Equipment needing service shows under "Needs attention" in the list and on the dashboard card.
+- Deleting equipment also deletes its service log.
+
+Before `005_equipment.sql` is run the app keeps working and the Equipment pages stay empty; saving
+shows which file to run.
 
 ### Changing the schema
 

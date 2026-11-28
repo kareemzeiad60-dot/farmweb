@@ -64,7 +64,7 @@ test('app reads and writes the per-resource tables (jsdom, fake Supabase)', { ti
 
   check("cloud mode: signed in, app shell visible", d.querySelector("#app-shell").hidden === false && d.querySelector("#auth-screen").hidden === true);
   const readTables = new Set(calls.filter((c) => c.op === "select").map((c) => c.table));
-  check("loaded all 18 domain tables for the farm", [...readTables].filter((t) => !["farm_profiles", "farms"].includes(t)).length === 18, `(${readTables.size - 2})`);
+  check("loaded all 20 domain tables for the farm", [...readTables].filter((t) => !["farm_profiles", "farms"].includes(t)).length === 20, `(${readTables.size - 2})`);
   check("no legacy farm_records query", !readTables.has("farm_records"));
 
   w.location.hash = "#/crops"; await sleep(200);

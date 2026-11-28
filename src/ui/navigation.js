@@ -9,7 +9,7 @@ function getRoute() {
   // "users" is the Team page: members come from the database, not from editable records.
   if (path[0] === "users") return { page: "team", resource: "users" };
   if (!resourceById.has(path[0])) return { page: "not-found" };
-  if (path[1] === "new") return { page: "form", resource: path[0] };
+  if (path[1] === "new") return { page: "form", resource: path[0], prefill: path[2] ? decodeURIComponent(path[2]) : "" };
   if (path[1] === "edit" && path[2]) return { page: "form", resource: path[0], recordId: decodeURIComponent(path[2]) };
   return { page: "list", resource: path[0] };
 }
@@ -73,7 +73,7 @@ function navigationIcon(id) {
     "crop-fields": "⌗", crops: "♧", "planting-seasons": "◷", "bee-hives": "▤",
     "bee-colonies": "♧", "hive-inspections": "⌕", "honey-productions": "◉",
     "bee-hive-types": "▦", "animal-fields": "⌗", animals: "♧",
-    "livestock-groups": "♙", "feed-mixtures": "♨", "financial-records": "↗", users: "♙",
+    "livestock-groups": "♙", "feed-mixtures": "♨", equipment: "⚒", "equipment-services": "↻", "financial-records": "↗", users: "♙",
     tasks: "☷", "my-tasks": "☑", "farm-workers": "♙", "worker-leaves": "◷", holidays: "▣",
   };
   return icons[id] || "•";
